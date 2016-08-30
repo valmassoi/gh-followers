@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>GitHub Followers</title>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="main.css">
+    <!-- <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css"/> -->
+  </head>
+  <body>
+    <div class="chart centered">
+      <h1>
+        <b>Force Directed Diagram of GitHub Followers</b>
+      </h1>
+      <section style="padding-top: 20px;">
+        <label>GitHub username</label>
+        <input name="username" value="valmassoi" placeholder="username" maxlength="39">
+      </section>
+      <section style="padding-top: 20px;">
+        <label>Connection degree</label>
+        <input name="degree" value="1" placeholder="1" maxlength="3">
+      </section>
+      <div id="playground" class="playground centered"></div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.6.1/lodash.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="diagram.js"></script>
+  </body>
+</html>

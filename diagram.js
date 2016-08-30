@@ -1,0 +1,138 @@
+var diagram = {
+  init: function() {
+    this.cacheDom();
+    this.bindEvents();
+    this.dThree();
+    // this.initialValue = false;
+  },
+  cacheDom: function() {
+    this.$username=$("[name=username]");
+    this.$degree=$("[name=degree]");
+    this.$playground = $('#playground');
+    // this.$ = this.$playground.find('#');
+  },
+  bindEvents: function() {
+    this.$username.on('input', this.changeUsername.bind(this))
+    this.$degree.on('input', this.changeDegree.bind(this))
+  },
+  changeUsername: function() {
+    console.log("new user", this.$username.val());
+    this.$playground.empty()
+    this.dThree()
+  },
+  changeDegree: function() {
+    var n = Number(this.$degree.val())
+    if (n >= 0) {
+      console.log("new val", n);
+      //TODO delay
+      console.log(this.$username.val());
+      this.dThree()
+    }
+  },
+  dThree: function() {
+    const width = 960,//TODO move to init
+        height = 700;
+
+    var svg = d3.select("#playground").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    var div = d3.select("#playground").append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+
+    let username = this.$username.val()
+    if (username === '')
+      return
+    let dataUrl = `https://api.github.com/users/${username}/followers`
+    d3.json(dataUrl, (err, data) => {
+      if(err) {
+        console.log(err);
+        return
+        //handle err, alert no user
+      }
+      console.log("d3");
+      console.log(data);
+      var force = d3.layout.force()
+          .gravity(0.08)
+          .distance(200)//TODO variable?
+          .charge(-100)
+          .size([width, height]);
+
+      const nodeData = data.map (d => ({
+        icon: d.avatar_url,
+        // url: urlFormater(d.link),
+        username: d.login
+      }));
+      const links = nodeData.reduce((previousValue, currentValue) => {
+        previousValue.push({
+          icon: currentValue.icon,
+          source: currentValue.username,
+          target: currentValue.url
+        });
+        return previousValue;
+      }, []);
+      const nodes = {};
+      links.forEach((link) => {
+        link.source = nodes[link.source] ? nodes[link.source] : (nodes[link.source] = {
+          icon: link.icon,
+          name: link.source//user
+        });
+        link.target = nodes[link.target] ? nodes[link.target] : (nodes[link.target] = {
+          name: link.target//site
+        });
+      });
+
+      force
+          .nodes(d3.values(nodes))
+          .links(links)
+          .start();
+
+      var link = svg.selectAll(".link")
+          .data(force.links())
+        .enter().append("line")
+          .attr("class", "link")
+          .style("stroke-width", 2);//function(d) { return Math.sqrt(d.value); });
+
+      var node = svg.selectAll(".node")
+          .data(force.nodes())
+        .enter().append("g")
+          .attr("class", "node")
+
+         .call(force.drag)
+          .on("mouseover", function(d) {
+            var name = (typeof d.name !== "undefined") ? d.name : username
+                div.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                div.html("<b>Name: </b>" + name)
+                 .style("left", (d3.event.pageX + 3) + "px")
+                 .style("top", (d3.event.pageY - 5) + "px");
+          })
+            .on("mouseout", function() {
+                div.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+      node.append("circle")
+          .attr("r", d => _.max([5 , d.weight * 2]))
+          .style("fill", "white");
+      node.append("image")
+          .attr("xlink:href",  d => (typeof d.icon !== "undefined") ? d.icon : '')//TODO
+          .attr("x", -15)
+          .attr("y", -15)
+          .attr("width", 30)
+          .attr("height", 30);
+
+      force.on("tick", function() {
+        link.attr("x1", d => d.source.x)
+          .attr('y1', d => d.source.y)
+          .attr('x2', d => d.target.x)
+          .attr('y2', d => d.target.y);
+        node.attr('transform', d => `translate(${d.x},${d.y})`);
+      });
+    })
+  },
+};
+
+diagram.init();
