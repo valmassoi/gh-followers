@@ -6,4 +6,5 @@ Angular 2 Observable delay would be nice
 animate/fade data load
 
 ## ideas
-on click of node, select that user
+on click of node, select that user  
+input: following or followers  

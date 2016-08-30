@@ -21,18 +21,17 @@ var diagram = {
     // this.dThree()
   },
   changeDegree: function() {
-    var n = Number(this.$degree.val())
+    var n = Number(this.$degree.val())//TODO delay input
+    console.log("new deg", n);
     if (n >= 0) {
-      console.log("new val", n);
-      //TODO delay input
-      console.log(this.$username.val());
-      //For each degree
-      // this.dThree()
+      this.$playground.empty()
+      //For each degree load followers follower
+      this.dThree()
     }
   },
   dThree: function() {
     const width = 960,//TODO move to init
-        height = 700;
+          height = window.innerHeight - 270; //TODO check for resize
 
     var svg = d3.select("#playground").append("svg")
         .attr("width", width)
@@ -52,6 +51,17 @@ var diagram = {
     //degree 0, show just user
     //degree 1, show user + followers
     //degree 2+, show user + followers + iterate their followers
+    if (this.$degree.val() > 1) {
+      data.push(      {
+              "login": "lancedikson",
+              "nodey": "jashpetty",
+              "avatar_url": "https://avatars.githubusercontent.com/u/1955931?v=3",
+              "url": "https://api.github.com/users/a",
+              "html_url": "https://github.com/a",
+              "followers_url": "https://api.github.com/users/a/followers",
+              "following_url": "https://api.github.com/users/a/following{/other_user}",
+            })
+    }
 
 
     // let dataUrl = `https://api.github.com/users/${username}/followers`
