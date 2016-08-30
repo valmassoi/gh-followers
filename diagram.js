@@ -18,15 +18,16 @@ var diagram = {
   changeUsername: function() {
     console.log("new user", this.$username.val());
     this.$playground.empty()
-    this.dThree()
+    // this.dThree()
   },
   changeDegree: function() {
     var n = Number(this.$degree.val())
     if (n >= 0) {
       console.log("new val", n);
-      //TODO delay
+      //TODO delay input
       console.log(this.$username.val());
-      this.dThree()
+      //For each degree
+      // this.dThree()
     }
   },
   dThree: function() {
@@ -44,31 +45,39 @@ var diagram = {
     let username = this.$username.val()
     if (username === '')
       return
-    let dataUrl = `https://api.github.com/users/${username}/followers`
-    d3.json(dataUrl, (err, data) => {
-      if(err) {
-        console.log(err);
-        return
+
+    var data = document.getElementById('mockdata').innerHTML;
+    data = JSON.parse(data);
+    data = data.followers //HACK
+    //degree 0, show just user
+    //degree 1, show user + followers
+    //degree 2+, show user + followers + iterate their followers
+
+
+    // let dataUrl = `https://api.github.com/users/${username}/followers`
+    // d3.json(dataUrl, (err, data) => {
+      // if(err) {
+      //   console.log(err);
+      //   return
         //handle err, alert no user
-      }
-      console.log("d3");
+      // }
       console.log(data);
       var force = d3.layout.force()
           .gravity(0.08)
-          .distance(200)//TODO variable?
-          .charge(-100)
+          .distance(150)//TODO variable?
+          .charge(-300)
           .size([width, height]);
 
       const nodeData = data.map (d => ({
         icon: d.avatar_url,
-        // url: urlFormater(d.link),
+        nodey: d.nodey,
         username: d.login
       }));
       const links = nodeData.reduce((previousValue, currentValue) => {
         previousValue.push({
           icon: currentValue.icon,
           source: currentValue.username,
-          target: currentValue.url
+          target: currentValue.nodey
         });
         return previousValue;
       }, []);
@@ -76,7 +85,7 @@ var diagram = {
       links.forEach((link) => {
         link.source = nodes[link.source] ? nodes[link.source] : (nodes[link.source] = {
           icon: link.icon,
-          name: link.source//user
+          name: link.source//username
         });
         link.target = nodes[link.target] ? nodes[link.target] : (nodes[link.target] = {
           name: link.target//site
@@ -131,7 +140,7 @@ var diagram = {
           .attr('y2', d => d.target.y);
         node.attr('transform', d => `translate(${d.x},${d.y})`);
       });
-    })
+    // })
   },
 };
 
