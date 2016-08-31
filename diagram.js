@@ -19,30 +19,32 @@ const diagram = {
   changeUsername: function() {
     const user = this.$username.val()
     console.log("new user", user);
+    this.data = []
     this.$playground.empty()
     this.degreeLoop(user)
   },
   changeDegree: function() {
+    const user = this.$username.val()
     const n = Number(this.$degree.val())//TODO delay input
     console.log("new deg", n);
     if (n >= 0) {
       //For each degree load followers follower
 
       this.$playground.empty(); //reset visualization
-
-      let data = this.data
-
-        data.push(      {
-                "login": "lancedikson",
-                "nodey": "jashpetty",
-                "avatar_url": "https://avatars.githubusercontent.com/u/1955931?v=3",
-                "url": "https://api.github.com/users/a",
-                "html_url": "https://github.com/a",
-                "followers_url": "https://api.github.com/users/a/followers",
-                "following_url": "https://api.github.com/users/a/following{/other_user}",
-              })
-
-      this.dThree(data); //update visualization
+      this.degreeLoop(user)
+      // let data = this.data
+      //
+      //   data.push(      {
+      //           "login": "lancedikson",
+      //           "nodey": "jashpetty",
+      //           "avatar_url": "https://avatars.githubusercontent.com/u/1955931?v=3",
+      //           "url": "https://api.github.com/users/a",
+      //           "html_url": "https://github.com/a",
+      //           "followers_url": "https://api.github.com/users/a/followers",
+      //           "following_url": "https://api.github.com/users/a/following{/other_user}",
+      //         })
+      //
+      // this.dThree(data); //update visualization
     }
   },
   degreeLoop: function(user) {
@@ -59,7 +61,7 @@ const diagram = {
       console.log(i);
       if (i===degree) {
         console.log("done iterating", _.flattenDeep(diagram.data));
-        diagram.dThree(_.flattenDeep(diagram.data))
+        diagram.dThree(_.flattenDeep(diagram.data))//TODO do every degree not just the last
       }
       else {
         let tempArray = []
@@ -92,12 +94,13 @@ const diagram = {
     })
   },
   dThree: function(data) {
-    const width = 960,
-          height = window.innerHeight - 270; //TODO check for resize
+    const width = 1000,
+          height = 500; //TODO check for resize
 
     const svg = d3.select("#playground").append("svg")
-        .attr("width", width)
-        .attr("height", height);
+    .attr("preserveAspectRatio", "xMinYMin meet")
+    .attr("viewBox", `0 0 ${width} ${height}`)
+    .classed("svg-content-responsive", true)
 
     const div = d3.select("#playground").append("div")
       .attr("class", "tooltip")
@@ -170,7 +173,7 @@ const diagram = {
                   .style("opacity", 0);
           });
     node.append("circle")
-        .attr("r", d => _.max([5 , d.weight * 2]))
+        .attr("r", d => _.min([_.max([5 , d.weight * 2]), 50]))
         .style("fill", "white");
     node.append("image")
         .attr("xlink:href",  d => (typeof d.icon !== "undefined") ? d.icon : '')//TODO
