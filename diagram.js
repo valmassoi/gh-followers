@@ -3,7 +3,7 @@ const diagram = {
     this.cacheDom();
     this.bindEvents();
     this.data = [];
-    this.bound = false;
+    this.bound = false;//bind nodes to inside of box (UI)
     this.changeUsername();//init
   },
   cacheDom: function() {
@@ -77,22 +77,22 @@ const diagram = {
     .done((data) => {
       if(data.length === 0 && initial ) {//checks only target user
         this.alertUser('User has no followers or is an Organization');
+        return
       }
       callback(data, user);
     })
     .fail((err) => {
       console.log("ERRRR", err);
       if(err.statusText === 'Forbidden') {
-        this.$playground.empty();
         this.alertUser('GitHub API rate limit exceeded, please try again in an hour or from a new IP address');
       }
       else if(initial) { //checks only target user
-        this.$playground.empty();
         this.alertUser(err.statusText);
       }
     })
   },
   alertUser: function(error) {
+    this.$playground.empty();
     this.$error.fadeIn(500)
       .html(`<span class="glyphicon glyphicon-alert pull-left" aria-hidden="true"></span>
         ${error}
@@ -192,7 +192,7 @@ const diagram = {
         .attr('x2', d => d.target.x)
         .attr('y2', d => d.target.y);
       node
-        .attr("cx", function(d) { if (diagram.bound) { return d.x = Math.max(15, Math.min(width - 15, d.x)); } })//bind to inside of box
+        .attr("cx", function(d) { if (diagram.bound) { return d.x = Math.max(15, Math.min(width - 15, d.x)); } })
         .attr("cy", function(d) { if (diagram.bound) { return d.y = Math.max(15, Math.min(height - 15, d.y)); } })
         .attr('transform', d => `translate(${d.x},${d.y})`)
     });
