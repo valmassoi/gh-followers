@@ -3,6 +3,7 @@ const diagram = {
     this.cacheDom();
     this.bindEvents();
     this.data = [];
+    this.bound = false;
     this.changeUsername();//init
   },
   cacheDom: function() {
@@ -37,10 +38,6 @@ const diagram = {
     const degree = Number(this.$degree.val());
     let i = 0;
     function callback(data, forUser) {
-      // data.map(element => {
-      //   element.nodey = forUser
-      //   return element
-      // })
       console.log("updated", data);
       diagram.data.push(data);//immut
       console.log("diagram.data.push(data)", diagram.data);
@@ -51,44 +48,25 @@ const diagram = {
       if (i===degree) {
         console.log("done iterating", _.flattenDeep(diagram.data));
       }
-      else if (i<2) {
-        let tempArray = [];
-        function tempCallback(a, b) {
-          a.map(element => {
-            element.nodey = b;
-            return element;
-          })
-          tempArray.push(a);
-          console.log(a, b);
-        }
-        console.log("2d",diagram.data);
-        console.log("1d",diagram.data[i-1]);
-        diagram.data[i-1].forEach(user => {
-          diagram.getFollowers(user.login, tempCallback);
-        });
-        //push full or
-        // if (diagram.data[i-1].length === tempArray.length)
-        setTimeout(function(){callback(tempArray)}, 2000);//HACK !!!!!!!!!!!!!
-      }
       else {
         let tempArray = [];
         function tempCallback(a, b) {
           a.map(element => {
-            element.nodey = b;
+            element.connected = b;
             return element;
           })
           tempArray.push(a);
-          console.log(a, b);
         }
-        diagram.data[1].forEach(drilldown => {
-          drilldown.forEach(user => {
-            diagram.getFollowers(user.login, tempCallback);
-          })
-        })
-        setTimeout(function(){callback(tempArray)}, 2000);//HACK !!!!!!!!!!!!!
+        console.log("2d",diagram.data);
+        console.log("1d",diagram.data[i-1]);
+        diagram.data[diagram.data.length-1].forEach(user => {
+          diagram.getFollowers(user.login, tempCallback);
+        });
+        // if (diagram.data[i-1].length === tempArray.length)
+        setTimeout(function(){callback(_.flattenDeep(tempArray))}, 2000);//HACK !!!!!!!!!!!!!
       }
     }
-    this.getFollowers(user, callback, true);
+    this.getFollowers(user, callback, i===0);
   },
   getFollowers: function(user, callback, initial) {
     const url = `https://api.github.com/users/${user}/followers`;
@@ -103,9 +81,15 @@ const diagram = {
       callback(data, user);
     })
     .fail((err) => {
-      this.$playground.empty();
-      if(initial) //checks only target user
+      console.log("ERRRR", err);
+      if(err.statusText === 'Forbidden') {
+        this.$playground.empty();
+        this.alertUser('GitHub API rate limit exceeded, please try again in an hour or from a new IP address');
+      }
+      else if(initial) { //checks only target user
+        this.$playground.empty();
         this.alertUser(err.statusText);
+      }
     })
   },
   alertUser: function(error) {
@@ -138,14 +122,14 @@ const diagram = {
 
     const nodeData = data.map (d => ({
       icon: d.avatar_url,
-      nodey: d.nodey,
+      connected: d.connected,
       username: d.login
     }));
     const links = nodeData.reduce((previousValue, currentValue) => {
       previousValue.push({
         icon: currentValue.icon,
         source: currentValue.username,
-        target: currentValue.nodey
+        target: currentValue.connected
       });
       return previousValue;
     }, []);
@@ -191,15 +175,12 @@ const diagram = {
                 .duration(500)
                 .style("opacity", 0);
         });
-        // .on("click", function(d) { //activates when draging too
-        //   const name = (typeof d.name !== "undefined") ? d.name : username
-        //   window.open(`https://github.com/${name}`)
-        // });
+
     node.append("circle")
         .attr("r", d => _.min([_.max([5 , d.weight * 2]), 30]))
-        .style("fill", "white");
+        .style("fill",  d => (typeof d.icon === 'undefined') ? 'DeepPink' : 'white');
     node.append("image")
-        .attr("xlink:href",  d => (typeof d.icon !== "undefined") ? d.icon : '')//TODO
+        .attr("xlink:href",  d => (typeof d.icon !== 'undefined') ? d.icon : '')//TODO
         .attr("x", -15)
         .attr("y", -15)
         .attr("width", 30)
@@ -210,7 +191,10 @@ const diagram = {
         .attr('y1', d => d.source.y)
         .attr('x2', d => d.target.x)
         .attr('y2', d => d.target.y);
-      node.attr('transform', d => `translate(${d.x},${d.y})`);
+      node
+        .attr("cx", function(d) { if (diagram.bound) { return d.x = Math.max(15, Math.min(width - 15, d.x)); } })//bind to inside of box
+        .attr("cy", function(d) { if (diagram.bound) { return d.y = Math.max(15, Math.min(height - 15, d.y)); } })
+        .attr('transform', d => `translate(${d.x},${d.y})`)
     });
   },
 };
