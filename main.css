@@ -1,9 +1,10 @@
-body{
+body {
   margin-top: 50px;
   font-family: "Open Sans", "sans-serif";
   background: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(000,124,229,1) 100%) fixed;
   color: white;
 }
+
 input {
   background: rgba(0, 0, 255, 0);
   color: white;
@@ -12,26 +13,28 @@ input {
   border-radius: 10px;
   padding: 10px;
 }
-section {
-  padding-bottom: 10px;
+
+.centered {
+  margin: 0px auto;
+  text-align: center;
 }
+
+section, .alert {
+  margin-bottom: 10px;
+}
+
+.alert {
+  width: 90%;
+  display: none;
+}
+
 #playground {
-  /*background-color: black;*/
   border: 1px solid white;
-}
-.node {
-/*   stroke: #fff; */
-/*   stroke-width: 1.5px; */
 }
 
 .link {
   stroke: #999;
   stroke-opacity: .6;
-}
-
-.centered {
-  margin: 0px auto;
-  text-align: center;
 }
 
 div.tooltip {

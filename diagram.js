@@ -9,45 +9,35 @@ const diagram = {
   cacheDom: function() {
     this.$username=$("[name=username]");
     this.$degree=$("[name=degree]");
+    this.$error=$('#error');
     this.$playground = $('#playground');
     // this.$ = this.$playground.find('#');
   },
   bindEvents: function() {
-    this.$username.on('input', this.changeUsername.bind(this))
-    this.$degree.on('input', this.changeDegree.bind(this))
+    this.$username.on('input', _.debounce(this.changeUsername.bind(this), 700))
+    this.$degree.on('input', _.debounce(this.changeDegree.bind(this), 1000))
   },
   changeUsername: function() {
     const user = this.$username.val()
     console.log("new user", user);
-    this.data = []
-    this.$playground.empty()
+
+    // this.$playground.empty()
     this.degreeLoop(user)
   },
   changeDegree: function() {
     const user = this.$username.val()
     const n = Number(this.$degree.val())//TODO delay input
     console.log("new deg", n);
-    if (n >= 0) {
-      //For each degree load followers follower
-
-      this.$playground.empty(); //reset visualization
+    if (n > 0) {//HTML 5 min atrb protects this also
       this.degreeLoop(user)
-      // let data = this.data
-      //
-      //   data.push(      {
-      //           "login": "lancedikson",
-      //           "nodey": "jashpetty",
-      //           "avatar_url": "https://avatars.githubusercontent.com/u/1955931?v=3",
-      //           "url": "https://api.github.com/users/a",
-      //           "html_url": "https://github.com/a",
-      //           "followers_url": "https://api.github.com/users/a/followers",
-      //           "following_url": "https://api.github.com/users/a/following{/other_user}",
-      //         })
-      //
-      // this.dThree(data); //update visualization
+    }
+    else {
+      this.$playground.empty()
+      this.dThree([{}])
     }
   },
   degreeLoop: function(user) {
+    this.data = []
     const degree = Number(this.$degree.val())
     let i = 0
     function callback(data, forUser) {
@@ -56,12 +46,13 @@ const diagram = {
       //   return element
       // })
       console.log("updated", data);
-      diagram.data.push(data)
+      diagram.data.push(data)//immut
       i++
       console.log(i);
+      diagram.$playground.empty()
+      diagram.dThree(_.flattenDeep(diagram.data))
       if (i===degree) {
         console.log("done iterating", _.flattenDeep(diagram.data));
-        diagram.dThree(_.flattenDeep(diagram.data))//TODO do every degree not just the last
       }
       else {
         let tempArray = []
@@ -73,7 +64,8 @@ const diagram = {
           tempArray.push(a)
           console.log(a, b);
         }
-
+        console.log("2d",diagram.data);
+        console.log("1d",diagram.data[i-1]);
         diagram.data[i-1].forEach(user => {
           diagram.getFollowers(user.login, tempCallback)
         })
@@ -86,12 +78,26 @@ const diagram = {
   },
   getFollowers: function(user, callback) {
     const url = `https://api.github.com/users/${user}/followers`
+    this.$error.slideUp(300).delay(800).fadeOut(400);
     $.get(url, data => {
       console.log(data);
     })
     .done((data) => {
+      if(data.length === 0) {
+        this.alertUser('User has no followers or is an Organization')
+      }
       callback(data, user)
     })
+    .fail((err) => {
+      this.$playground.empty()
+      this.alertUser(err.statusText)
+    })
+  },
+  alertUser: function(error) {
+    this.$error.fadeIn(500)
+      .html(`<span class="glyphicon glyphicon-alert pull-left" aria-hidden="true"></span>
+        ${error}
+      `);
   },
   dThree: function(data) {
     const width = 1000,
@@ -112,9 +118,8 @@ const diagram = {
 
     console.log(data);
     const force = d3.layout.force()
-        .gravity(0.08)
-        .distance(150)//TODO variable?
-        .charge(-300)
+        .gravity(0.1)
+        .charge(-1000)
         .size([width, height]);
 
     const nodeData = data.map (d => ({
@@ -150,7 +155,7 @@ const diagram = {
         .data(force.links())
       .enter().append("line")
         .attr("class", "link")
-        .style("stroke-width", 2);//function(d) { return Math.sqrt(d.value); });
+        .style("stroke-width", 2);
 
     const node = svg.selectAll(".node")
         .data(force.nodes())
@@ -167,13 +172,17 @@ const diagram = {
                .style("left", (d3.event.pageX + 3) + "px")
                .style("top", (d3.event.pageY - 5) + "px");
         })
-          .on("mouseout", function() {
-              div.transition()
-                  .duration(500)
-                  .style("opacity", 0);
-          });
+        .on("mouseout", function() {
+            div.transition()
+                .duration(500)
+                .style("opacity", 0);
+        });
+        // .on("click", function(d) { //activates when draging too
+        //   const name = (typeof d.name !== "undefined") ? d.name : username
+        //   window.open(`https://github.com/${name}`)
+        // });
     node.append("circle")
-        .attr("r", d => _.min([_.max([5 , d.weight * 2]), 50]))
+        .attr("r", d => _.min([_.max([5 , d.weight * 2]), 30]))
         .style("fill", "white");
     node.append("image")
         .attr("xlink:href",  d => (typeof d.icon !== "undefined") ? d.icon : '')//TODO
