@@ -2,95 +2,110 @@ const diagram = {
   init: function() {
     this.cacheDom();
     this.bindEvents();
-    this.data = []
+    this.data = [];
     this.changeUsername();//init
-    // this.dThree(this.data);
   },
   cacheDom: function() {
     this.$username=$("[name=username]");
     this.$degree=$("[name=degree]");
     this.$error=$('#error');
     this.$playground = $('#playground');
-    // this.$ = this.$playground.find('#');
   },
   bindEvents: function() {
-    this.$username.on('input', _.debounce(this.changeUsername.bind(this), 700))
-    this.$degree.on('input', _.debounce(this.changeDegree.bind(this), 1000))
+    this.$username.on('input', _.debounce(this.changeUsername.bind(this), 700));
+    this.$degree.on('input', _.debounce(this.changeDegree.bind(this), 1000));
   },
   changeUsername: function() {
-    const user = this.$username.val()
+    const user = this.$username.val();
     console.log("new user", user);
-
-    // this.$playground.empty()
-    this.degreeLoop(user)
+    this.degreeLoop(user);
   },
   changeDegree: function() {
-    const user = this.$username.val()
-    const n = Number(this.$degree.val())//TODO delay input
+    const user = this.$username.val();
+    const n = Number(this.$degree.val());
     console.log("new deg", n);
-    if (n > 0) {//HTML 5 min atrb protects this also
-      this.degreeLoop(user)
+    if (n > 0) {
+      this.degreeLoop(user);
     }
     else {
-      this.$playground.empty()
-      this.dThree([{}])
+      this.$playground.empty();
+      this.dThree([{}]);
     }
   },
   degreeLoop: function(user) {
-    this.data = []
-    const degree = Number(this.$degree.val())
-    let i = 0
+    this.data = [];
+    const degree = Number(this.$degree.val());
+    let i = 0;
     function callback(data, forUser) {
       // data.map(element => {
       //   element.nodey = forUser
       //   return element
       // })
       console.log("updated", data);
-      diagram.data.push(data)//immut
-      i++
+      diagram.data.push(data);//immut
+      console.log("diagram.data.push(data)", diagram.data);
+      i++;
       console.log(i);
-      diagram.$playground.empty()
-      diagram.dThree(_.flattenDeep(diagram.data))
+      diagram.$playground.empty();
+      diagram.dThree(_.flattenDeep(diagram.data));
       if (i===degree) {
         console.log("done iterating", _.flattenDeep(diagram.data));
       }
-      else {
-        let tempArray = []
+      else if (i<2) {
+        let tempArray = [];
         function tempCallback(a, b) {
           a.map(element => {
-            element.nodey = b
-            return element
+            element.nodey = b;
+            return element;
           })
-          tempArray.push(a)
+          tempArray.push(a);
           console.log(a, b);
         }
         console.log("2d",diagram.data);
         console.log("1d",diagram.data[i-1]);
         diagram.data[i-1].forEach(user => {
-          diagram.getFollowers(user.login, tempCallback)
-        })
+          diagram.getFollowers(user.login, tempCallback);
+        });
         //push full or
         // if (diagram.data[i-1].length === tempArray.length)
         setTimeout(function(){callback(tempArray)}, 2000);//HACK !!!!!!!!!!!!!
       }
+      else {
+        let tempArray = [];
+        function tempCallback(a, b) {
+          a.map(element => {
+            element.nodey = b;
+            return element;
+          })
+          tempArray.push(a);
+          console.log(a, b);
+        }
+        diagram.data[1].forEach(drilldown => {
+          drilldown.forEach(user => {
+            diagram.getFollowers(user.login, tempCallback);
+          })
+        })
+        setTimeout(function(){callback(tempArray)}, 2000);//HACK !!!!!!!!!!!!!
+      }
     }
-    this.getFollowers(user, callback)
+    this.getFollowers(user, callback, true);
   },
-  getFollowers: function(user, callback) {
-    const url = `https://api.github.com/users/${user}/followers`
+  getFollowers: function(user, callback, initial) {
+    const url = `https://api.github.com/users/${user}/followers`;
     this.$error.slideUp(300).delay(800).fadeOut(400);
     $.get(url, data => {
       console.log(data);
     })
     .done((data) => {
-      if(data.length === 0) {
-        this.alertUser('User has no followers or is an Organization')
+      if(data.length === 0 && initial ) {//checks only target user
+        this.alertUser('User has no followers or is an Organization');
       }
-      callback(data, user)
+      callback(data, user);
     })
     .fail((err) => {
-      this.$playground.empty()
-      this.alertUser(err.statusText)
+      this.$playground.empty();
+      if(initial) //checks only target user
+        this.alertUser(err.statusText);
     })
   },
   alertUser: function(error) {
@@ -101,24 +116,23 @@ const diagram = {
   },
   dThree: function(data) {
     const width = 1000,
-          height = 500; //TODO check for resize
+          height = 700;
 
     const svg = d3.select("#playground").append("svg")
     .attr("preserveAspectRatio", "xMinYMin meet")
     .attr("viewBox", `0 0 ${width} ${height}`)
-    .classed("svg-content-responsive", true)
+    .classed("svg-content-responsive", true);
 
     const div = d3.select("#playground").append("div")
       .attr("class", "tooltip")
       .style("opacity", 0);
 
-    let username = this.$username.val()
+    let username = this.$username.val();
     if (username === '')
-      return
+      return;
 
-    console.log(data);
     const force = d3.layout.force()
-        .gravity(0.1)
+        .gravity(.7)
         .charge(-1000)
         .size([width, height]);
 
