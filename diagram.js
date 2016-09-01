@@ -18,13 +18,11 @@ const diagram = {
   },
   changeUsername: function() {
     const user = this.$username.val();
-    console.log("new user", user);
     this.degreeLoop(user);
   },
   changeDegree: function() {
     const user = this.$username.val();
     const n = Number(this.$degree.val());
-    console.log("new deg", n);
     if (n > 0) {
       this.degreeLoop(user);
     }
@@ -38,10 +36,9 @@ const diagram = {
     const degree = Number(this.$degree.val());
     let i = 0;
     function callback(data, forUser) {
-      console.log("updated", data);
-      diagram.data.push(data);//immut
-      console.log("diagram.data.push(data)", diagram.data);
+      diagram.data.push(data);
       i++;
+      let itemsProcessed = 0;
       console.log(i);
       diagram.$playground.empty();
       diagram.dThree(_.flattenDeep(diagram.data));
@@ -50,39 +47,39 @@ const diagram = {
       }
       else {
         let tempArray = [];
-        function tempCallback(a, b) {
+        function tempCallback(a, b, length) {
           a.map(element => {
             element.connected = b;
             return element;
           })
           tempArray.push(a);
+          itemsProcessed++;
+          if(itemsProcessed === length) {
+            callback(_.flattenDeep(tempArray))
+          }
         }
-        console.log("2d",diagram.data);
-        console.log("1d",diagram.data[i-1]);
-        diagram.data[diagram.data.length-1].forEach(user => {
-          diagram.getFollowers(user.login, tempCallback);
+        diagram.data[diagram.data.length-1].forEach((user, index, array) => {//iterate last degree
+          console.log(array.length);
+          diagram.getFollowers(user.login, tempCallback, false, array.length);
         });
-        // if (diagram.data[i-1].length === tempArray.length)
-        setTimeout(function(){callback(_.flattenDeep(tempArray))}, 2000);//HACK !!!!!!!!!!!!!
       }
     }
     this.getFollowers(user, callback, i===0);
   },
-  getFollowers: function(user, callback, initial) {
+  getFollowers: function(user, callback, initial, length = null) {
     const url = `https://api.github.com/users/${user}/followers`;
     this.$error.slideUp(300).delay(800).fadeOut(400);
     $.get(url, data => {
-      console.log(data);
+      // console.log(data);
     })
     .done((data) => {
-      if(data.length === 0 && initial ) {//checks only target user
+      if(data.length === 0 && initial ) {//checks only target user, not iterated followers
         this.alertUser('User has no followers or is an Organization');
         return
       }
-      callback(data, user);
+      callback(data, user, length);
     })
     .fail((err) => {
-      console.log("ERRRR", err);
       if(err.statusText === 'Forbidden') {
         this.alertUser('GitHub API rate limit exceeded, please try again in an hour or from a new IP address');
       }
@@ -103,9 +100,9 @@ const diagram = {
           height = 700;
 
     const svg = d3.select("#playground").append("svg")
-    .attr("preserveAspectRatio", "xMinYMin meet")
-    .attr("viewBox", `0 0 ${width} ${height}`)
-    .classed("svg-content-responsive", true);
+      .attr("preserveAspectRatio", "xMinYMin meet")
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .classed("svg-content-responsive", true);
 
     const div = d3.select("#playground").append("div")
       .attr("class", "tooltip")
@@ -116,9 +113,9 @@ const diagram = {
       return;
 
     const force = d3.layout.force()
-        .gravity(.7)
-        .charge(-1000)
-        .size([width, height]);
+      .gravity(.7)
+      .charge(-1000)
+      .size([width, height]);
 
     const nodeData = data.map (d => ({
       icon: d.avatar_url,
@@ -145,9 +142,9 @@ const diagram = {
     });
 
     force
-        .nodes(d3.values(nodes))
-        .links(links)
-        .start();
+      .nodes(d3.values(nodes))
+      .links(links)
+      .start();
 
     const link = svg.selectAll(".link")
         .data(force.links())
