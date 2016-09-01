@@ -1,3 +1,7 @@
+const $ = require('jquery');
+const _ = require('lodash');
+const d3 = require('d3');
+
 const diagram = {
   init: function() {
     this.cacheDom();
@@ -16,9 +20,9 @@ const diagram = {
     this.$username.on('input', _.debounce(this.changeUsername.bind(this), 700));
     this.$degree.on('input', _.debounce(this.changeDegree.bind(this), 1000));
   },
-  changeUsername: function() {
-    const user = this.$username.val();
-    this.degreeLoop(user);
+  changeUsername: function(user) {
+    user = this.$username.val() || user;//for testing
+    return this.degreeLoop(user);
   },
   changeDegree: function() {
     const user = this.$username.val();
@@ -59,12 +63,11 @@ const diagram = {
           }
         }
         diagram.data[diagram.data.length-1].forEach((user, index, array) => {//iterate last degree
-          console.log(array.length);
           diagram.getFollowers(user.login, tempCallback, false, array.length);
         });
       }
     }
-    this.getFollowers(user, callback, i===0);
+    return this.getFollowers(user, callback, i===0);
   },
   getFollowers: function(user, callback, initial, length = null) {
     const url = `https://api.github.com/users/${user}/followers`;
@@ -75,7 +78,6 @@ const diagram = {
     .done((data) => {
       if(data.length === 0 && initial ) {//checks only target user, not iterated followers
         this.alertUser('User has no followers or is an Organization');
-        return
       }
       callback(data, user, length);
     })
@@ -197,3 +199,4 @@ const diagram = {
 };
 
 diagram.init();
+module.exports = diagram;

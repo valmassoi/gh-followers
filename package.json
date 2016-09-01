@@ -4,10 +4,10 @@
   "description": "A coding challenge prompt that visualizes GitHub followers using a `d3.js` force directed graph",
   "main": "diagram.js",
   "directories": {
-    "test": "test"
+    "test": "__test__"
   },
   "scripts": {
-    "test": "mocha",
+    "test": "jest",
     "test:watch": "npm run test -- --watch",
     "build": "NODE_ENV=production webpack"
   },
@@ -23,8 +23,16 @@
   "homepage": "https://github.com/valmassoi/gh-followers#readme",
   "devDependencies": {
     "babel-core": "^6.14.0",
+    "babel-jest": "^15.0.0",
     "babel-loader": "^6.2.5",
     "babel-preset-es2015": "^6.14.0",
+    "jest-cli": "^15.0.2",
     "webpack": "^1.13.2"
+  },
+  "dependencies": {
+    "bootstrap": "3.3.5",
+    "d3": "3.5.5",
+    "jquery": "2.1.3",
+    "lodash": "4.6.1"
   }
 }

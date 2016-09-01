@@ -21,7 +21,8 @@ $ npm run build
 open index.html in a browser
 
 # Test
-$ npm run test
+$ nvm use 6 # must be on v6.x.x for ES6
+$ npm test
 
 ```
 
@@ -37,4 +38,3 @@ $ npm run test
 ## TODO
 - [x] "You may make unauthenticated requests to GitHub's API, but take care to properly handle hitting the GitHub API rate limit and other exceptions (your UI should clearly explain these errors)."  
 - [ ] "Have some way to test the correctness of the program. You don't need comprehensive unit tests; a basic end-to-end test is fine."  
-- [ ] Callback HACK
